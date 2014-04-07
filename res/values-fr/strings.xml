@@ -5,6 +5,8 @@
     
     <string name="button_toggle">Traceur</string>
     
+    <string name="desc_logo">Logo</string>
+    
     <string name="hint_url">http(s)://serveur/chemin</string>
     
     <string name="menu_settings">Réglages</string>
@@ -34,8 +36,6 @@
     <string name="text_stopped_on">Arrêté depuis le</string>
     <string name="text_killed">Android a stoppé l\'application</string>
     
-    <string name="toast_started">Démarré</string>
-	<string name="toast_stopped">Arrêté</string>
 	<string name="toast_service_running">Le traceur est en marche</string>
 	<string name="toast_service_stopped">Le traceur est arrếté</string>
 	<string name="toast_prefs_restart">N\'oubliez pas de redémarrer le traceur !</string>
