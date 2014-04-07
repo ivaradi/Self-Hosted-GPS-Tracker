@@ -84,7 +84,7 @@ public class SelfHostedGPSTrackerActivity extends Activity implements LocationLi
 			@Override
 			public void afterTextChanged(Editable s) {
 				SharedPreferences.Editor editor = preferences.edit();
-				editor.putString("URL", s.toString());
+				editor.putString("URL", s.toString().trim());
 				editor.commit();
 			}
 		});
