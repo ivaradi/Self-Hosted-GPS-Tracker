@@ -19,3 +19,6 @@ local.properties
 .classpath
 .project
 .settings
+
+# this is unrelated to the project
+/libs/android-support-v4.jar
