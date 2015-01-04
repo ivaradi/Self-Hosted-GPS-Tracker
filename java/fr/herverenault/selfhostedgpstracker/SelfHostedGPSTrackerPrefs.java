@@ -26,7 +26,7 @@ public class SelfHostedGPSTrackerPrefs extends PreferenceActivity {
 				int oldValue = Integer.parseInt(preferences.getString("pref_gps_updates", "0"));
 				if (newValue == null 
 						|| newValue.toString().length() == 0
-                        || !Pattern.matches("^\\d{1,5}$", newValue.toString())) {
+                        || ! Pattern.matches("^\\d{1,5}$", newValue.toString())) {
                     Toast.makeText(getApplicationContext(), getString(R.string.invalid_number), Toast.LENGTH_SHORT).show();
                     return false;
                 }
@@ -50,7 +50,7 @@ public class SelfHostedGPSTrackerPrefs extends PreferenceActivity {
 				int oldValue = Integer.parseInt(preferences.getString("pref_max_run_time", "0"));
 				if (newValue == null 
 						|| newValue.toString().length() == 0
-                        || !Pattern.matches("^\\d{1,5}$", newValue.toString())) {
+                        || ! Pattern.matches("^\\d{1,5}$", newValue.toString())) {
                     Toast.makeText(getApplicationContext(), getString(R.string.invalid_number), Toast.LENGTH_SHORT).show();
                     return false;
                 }
