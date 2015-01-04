@@ -6,3 +6,5 @@ This small Android app sends your GPS coordinates to *your* server. It's your da
 This is how it works :
 
 ![how it works.png](how-it-works.png)
+
+Compiled app is available on https://play.google.com/store/apps/details?id=fr.herverenault.selfhostedgpstracker
