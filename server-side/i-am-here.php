@@ -32,7 +32,7 @@ if ($date_lat_lon) {
 	</div>
 </div>
 
-<h2>OpenStreetMap version</h2>
+<h2>OpenStreetMap + Leaflet.js version</h2>
 <div id="openstreetmap" style="width: 800px; height: 600px">
     <div id="interlude" style="text-align: center; line-height: 600px; font-weight: bold; border: 1px dotted grey; background-color: #eee;">
         Map currently unavailable.
@@ -42,10 +42,6 @@ if ($date_lat_lon) {
 <script>
 var gmap, gmarker;
 var osmap, osmarker;
-
-<?php if ($lat && $lon): ?>
-createGMap(<?php echo $lat.",".$lon ?>);
-<?php endif; ?>
 
 function createGMap(lat, lon) {
 	var latlng = new google.maps.LatLng(lat, lon);
@@ -67,14 +63,32 @@ function createGMap(lat, lon) {
 	});
 }
 
+function createOSMap(lat, lon) {
+    osmap = L.map('openstreetmap').setView([lat, lon], 12);
+
+    L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(osmap);
+
+    osmarker = L.marker([lat, lon]);
+
+    osmarker
+        .addTo(osmap)
+        .bindPopup("<p>GPS coordinates :</p><p>" + lat + ", " + lon + "</p>");
+}
+
 function updateGMap(dte, lat, lon) {
 	var latlng = new google.maps.LatLng(lat, lon);
 	gmarker.setPosition(latlng);
 	gmap.panTo(latlng);
-	document.querySelector("#date").innerHTML = dte;
 }
 
-doRefresh();
+function updateOSMap(dte, lat, lon) {
+    osmarker.setLatLng([lat, lon]);
+    osmarker.bindPopup("<p>GPS coordinates :</p><p>" + lat + ", " + lon + "</p>");
+    osmap.panTo([lat, lon]);
+}
+
 function doRefresh() {
 	var xhr; 
 	try {
@@ -95,14 +109,27 @@ function doRefresh() {
 					} else {
 						updateGMap(dte, lat, lon);
 					}
+                    if (!osmap) {
+						createOSMap(lat, lon);
+					} else {
+						updateOSMap(dte, lat, lon);
+					}
+	                document.querySelector("#date").innerHTML = dte;
 				}
 			}
 		}
 	};
-	xhr.open("GET", "i-am-here-position?" + Math.random(),  true); 
+	xhr.open("GET", "i-am-here-position.php?" + Math.random(),  true); 
 	xhr.send(null);
 	setTimeout('doRefresh()', 30000);
 }
+
+<?php if ($lat && $lon): ?>
+createGMap(<?php echo $lat.",".$lon ?>);
+createOSMap(<?php echo $lat.",".$lon ?>);
+<?php endif; ?>
+
+doRefresh();
 
 </script>
 
