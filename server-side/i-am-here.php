@@ -3,6 +3,14 @@
 <head>
 <meta charset=utf-8>
 <title>I am here</title>
+
+<!-- Google Maps version -->
+<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+
+<!-- OpenStreetMap + Leaflet.js version -->
+<link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
+<script src="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
+
 </head>
 <body>
 
@@ -17,20 +25,29 @@ if ($date_lat_lon) {
 <h1>I was here on <span id="date"><?php echo $date ? $date : "…" ?></span></h1>
 <p>(last known position where I had a GPS signal, a network connection, and some battery power)</p>
 
-<div id="mapcanvas" style="width: 800px; height: 600px">
-	<div id="intercalaire" style="text-align: center; line-height: 600px; font-weight: bold; border: 1px dotted grey; background-color: #eee;">
+<h2>Google Maps version</h2>
+<div id="googlemap" style="width: 800px; height: 600px">
+	<div id="interlude" style="text-align: center; line-height: 600px; font-weight: bold; border: 1px dotted grey; background-color: #eee;">
 		Map currently unavailable.
 	</div>
 </div>
 
-<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+<h2>OpenStreetMap version</h2>
+<div id="openstreetmap" style="width: 800px; height: 600px">
+    <div id="interlude" style="text-align: center; line-height: 600px; font-weight: bold; border: 1px dotted grey; background-color: #eee;">
+        Map currently unavailable.
+    </div>
+</div>
+
 <script>
-// map
-var map, marker;
+var gmap, gmarker;
+var osmap, osmarker;
+
 <?php if ($lat && $lon): ?>
-createMap(<?php echo $lat.",".$lon ?>);
+createGMap(<?php echo $lat.",".$lon ?>);
 <?php endif; ?>
-function createMap(lat, lon) {
+
+function createGMap(lat, lon) {
 	var latlng = new google.maps.LatLng(lat, lon);
 	var myOptions = {
 	    zoom: 12,
@@ -39,15 +56,22 @@ function createMap(lat, lon) {
 	    navigationControlOptions: {style: google.maps.NavigationControlStyle.SMALL},
 	    mapTypeId: google.maps.MapTypeId.ROADMAP
 	};
-	map = new google.maps.Map(document.getElementById("mapcanvas"), myOptions);
-	marker = new google.maps.Marker({
+	gmap = new google.maps.Map(document.getElementById("googlemap"), myOptions);
+	gmarker = new google.maps.Marker({
 	      position: latlng, 
-	      map: map, 
+	      map: gmap, 
 	      title:"I'm here"
 	});
-	google.maps.event.addListener(marker, "click", function(e) {
-		alert("GPS coordinates:\nLatitude: " + marker.getPosition().lat() + "\nLongitude: " + marker.getPosition().lng());
+	google.maps.event.addListener(gmarker, "click", function(e) {
+		alert("GPS coordinates:\nLatitude: " + gmarker.getPosition().lat() + "\nLongitude: " + gmarker.getPosition().lng());
 	});
+}
+
+function updateGMap(dte, lat, lon) {
+	var latlng = new google.maps.LatLng(lat, lon);
+	gmarker.setPosition(latlng);
+	gmap.panTo(latlng);
+	document.querySelector("#date").innerHTML = dte;
 }
 
 doRefresh();
@@ -66,11 +90,10 @@ function doRefresh() {
 				lat = xhr.responseText.split('_')[1];
 				lon = xhr.responseText.split('_')[2];
 				if (dte && lat && lon) {
-					if (!map) {
-						createMap(lat, lon);
-					}
-					if (map) {
-						updateMap(dte, lat, lon);
+					if (!gmap) {
+						createGMap(lat, lon);
+					} else {
+						updateGMap(dte, lat, lon);
 					}
 				}
 			}
@@ -81,10 +104,5 @@ function doRefresh() {
 	setTimeout('doRefresh()', 30000);
 }
 
-function updateMap(dte, lat, lon) {
-	var latlng = new google.maps.LatLng(lat, lon);
-	marker.setPosition(latlng);
-	map.panTo(latlng);
-	document.querySelector("#date").innerHTML = dte;
-}
 </script>
+
