@@ -7,7 +7,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 public class SelfHostedGPSTrackerRequest extends AsyncTask<String, Void, Void> {
-	private final static String MY_TAG = "SelfHostedGPSTrackerRequest";
+	private final static String MY_TAG = "SelfHostedGPSTrackerReq";
 	
 	protected Void doInBackground(String... urlText) {
 		try {
