@@ -62,13 +62,14 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
 		}
 		
 		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, pref_gps_updates * 1000, 1, this);
+
+		new SelfHostedGPSTrackerRequest().execute(urlText + "tracker=start");
 	}
 
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		Log.d(MY_TAG, "in onHandleIntent, run for maximum time set in preferences");
-		new SelfHostedGPSTrackerRequest().execute(urlText + "tracker=start");
-				
+
 		isRunning = true;
 		runningSince = Calendar.getInstance();
 		Intent i = new Intent(NOTIFICATION);
