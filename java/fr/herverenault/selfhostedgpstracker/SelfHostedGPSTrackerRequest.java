@@ -23,7 +23,7 @@ public class SelfHostedGPSTrackerRequest extends AsyncTask<String, Void, Void> {
 			// that's ok, nothing more to do here
 		} catch (Exception e) {
 			// we cannot do anything about that : network may be temporarily down
-			Log.d(MY_TAG, "HTTP request failed");
+			Log.d(MY_TAG, "HTTP request failed" + e);
 		}
 		return null;
 	}
