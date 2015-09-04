@@ -23,7 +23,7 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
 	public static Calendar runningSince;
 	public Calendar stoppedOn;
 
-	private final static String MY_TAG = "SelfHostedGPSTrackerService";
+	private final static String MY_TAG = "SelfHostedGPSTrackerSrv";
 	
 	private SharedPreferences preferences;
 	private String urlText;
@@ -40,7 +40,7 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
 	public void onCreate() {
 		super.onCreate();		
 		Log.d(MY_TAG, "in onCreate, init GPS stuff");
-		
+
 		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
 			onProviderEnabled(LocationManager.GPS_PROVIDER);
