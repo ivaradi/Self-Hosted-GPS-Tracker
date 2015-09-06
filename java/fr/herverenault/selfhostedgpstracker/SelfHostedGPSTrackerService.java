@@ -1,7 +1,5 @@
 package fr.herverenault.selfhostedgpstracker;
 
-import java.util.Calendar;
-
 import android.app.IntentService;
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -11,9 +9,21 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.text.DateFormat;
+import java.util.Calendar;
+import java.util.Date;
+
+import javax.net.ssl.SSLHandshakeException;
 
 public class SelfHostedGPSTrackerService extends IntentService implements LocationListener {
 
@@ -21,6 +31,8 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
 
 	public static boolean isRunning;
 	public static Calendar runningSince;
+	public static String lastServerResponse;
+
 	public Calendar stoppedOn;
 
 	private final static String MY_TAG = "SelfHostedGPSTrackerSrv";
@@ -63,7 +75,12 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
 		
 		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, pref_gps_updates * 1000, 1, this);
 
-		new SelfHostedGPSTrackerRequest().execute(urlText + "tracker=start");
+		lastServerResponse = getResources().getString(R.string.waiting_for_gps_data);
+		Intent notifIntent = new Intent(NOTIFICATION);
+		notifIntent.putExtra(NOTIFICATION, "START");
+		sendBroadcast(notifIntent);
+
+		new SelfHostedGPSTrackerRequest().execute("tracker=start");
 	}
 
 	@Override
@@ -72,8 +89,8 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
 
 		isRunning = true;
 		runningSince = Calendar.getInstance();
-		Intent i = new Intent(NOTIFICATION);
-		sendBroadcast(i);
+		Intent notifIntent = new Intent(NOTIFICATION);
+		sendBroadcast(notifIntent);
 		
 		Notification notification = new Notification(R.drawable.ic_notif, getText(R.string.toast_service_running), System.currentTimeMillis());
 		Intent notificationIntent = new Intent(this, SelfHostedGPSTrackerActivity.class);
@@ -94,7 +111,7 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
 	public void onDestroy() {
 		// (user clicked the stop button, or max run time has been reached)
 		Log.d(MY_TAG, "in onDestroy, stop listening to the GPS");
-		new SelfHostedGPSTrackerRequest().execute(urlText + "tracker=stop");
+		new SelfHostedGPSTrackerRequest().execute("tracker=stop");
 		
 		locationManager.removeUpdates(this);
 		
@@ -105,8 +122,8 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
 		editor.putLong("stoppedOn", stoppedOn.getTimeInMillis());
 		editor.commit();
 		
-		Intent intent = new Intent(NOTIFICATION);
-		sendBroadcast(intent);
+		Intent notifIntent = new Intent(NOTIFICATION);
+		sendBroadcast(notifIntent);
 	}
 
 	/* -------------- GPS stuff -------------- */
@@ -121,7 +138,7 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
 			latestUpdate = System.currentTimeMillis();
 		}
 		
-		new SelfHostedGPSTrackerRequest().execute(urlText + "lat=" + location.getLatitude() + "&lon=" + location.getLongitude());
+		new SelfHostedGPSTrackerRequest().execute("lat=" + location.getLatitude() + "&lon=" + location.getLongitude());
 	}
 
 	@Override
@@ -134,5 +151,71 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
 
 	@Override
 	public void onStatusChanged(String provider, int status, Bundle extras) {
+	}
+
+	private class SelfHostedGPSTrackerRequest extends AsyncTask<String, Void, Void> {
+		private final static String MY_TAG = "SelfHostedGPSTrackerReq";
+
+		protected Void doInBackground(String... params) {
+			String message;
+			int code = 0;
+
+			try {
+				URL url = new URL(urlText + params[0]);
+				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+				conn.setReadTimeout(10000 /* milliseconds */);
+				conn.setConnectTimeout(15000 /* milliseconds */);
+				conn.setRequestMethod("GET");
+				conn.setDoInput(true);
+				conn.connect();
+				code = conn.getResponseCode();
+				Log.d(MY_TAG, "HTTP request done: " + code);
+				message = "HTTP " + code;
+			}
+			catch (MalformedURLException e) {
+				message = getResources().getString(R.string.error_malformed_url);
+			}
+			catch (UnknownHostException e) {
+				message = getResources().getString(R.string.error_unknown_host);
+			}
+			catch (SSLHandshakeException e) {
+				message = getResources().getString(R.string.error_ssl);
+			}
+			catch (SocketTimeoutException e) {
+				message = getResources().getString(R.string.error_timeout);
+			}
+			catch (Exception e) {
+				Log.d(MY_TAG, "HTTP request failed: " + e);
+				message = e.getLocalizedMessage();
+				if (message == null) {
+					message = e.toString();
+				}
+			}
+
+			if (!params[0].startsWith("tracker=")) {
+				lastServerResponse = getResources().getString(R.string.last_location_sent_at)
+						+ " "
+						+ DateFormat.getTimeInstance().format(new Date())
+						+ " ";
+
+				if (code == 200) {
+					lastServerResponse += "<font color='#00aa00'><b>"
+							+ getResources().getString(R.string.http_request_ok)
+							+ "</b></font>";
+				} else {
+					lastServerResponse += "<font color='#ff0000'><b>"
+							+ getResources().getString(R.string.http_request_failed)
+							+ "</b></font>"
+							+ "<br>"
+							+ "(" + message + ")";
+				}
+
+				Intent notifIntent = new Intent(NOTIFICATION);
+				notifIntent.putExtra(NOTIFICATION, "HTTP");
+				sendBroadcast(notifIntent);
+			}
+
+			return null;
+		}
 	}
 }

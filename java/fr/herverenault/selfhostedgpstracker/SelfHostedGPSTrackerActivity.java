@@ -1,8 +1,5 @@
 package fr.herverenault.selfhostedgpstracker;
 
-import java.text.DateFormat;
-import java.util.Date;
-
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -18,6 +15,7 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.Editable;
+import android.text.Html;
 import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -26,6 +24,9 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
+
+import java.text.DateFormat;
+import java.util.Date;
 
 public class SelfHostedGPSTrackerActivity extends Activity implements LocationListener {
 
@@ -40,13 +41,19 @@ public class SelfHostedGPSTrackerActivity extends Activity implements LocationLi
 	private TextView text_network_status;
 	private ToggleButton button_toggle;
 	private TextView text_running_since;
+	private TextView last_server_response;
 
 	private BroadcastReceiver receiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			String action = intent.getAction();
 			if (action.equals(SelfHostedGPSTrackerService.NOTIFICATION)) {
-				updateServiceStatus();
+				String extra = intent.getStringExtra(SelfHostedGPSTrackerService.NOTIFICATION);
+				if (extra != null) {
+					updateServerResponse();
+				} else {
+					updateServiceStatus();
+				}
 			}
 			if (action.equals(CONNECTIVITY)) {
 				updateNetworkStatus();
@@ -64,6 +71,7 @@ public class SelfHostedGPSTrackerActivity extends Activity implements LocationLi
 		text_network_status = (TextView)findViewById(R.id.text_network_status);
 		button_toggle = (ToggleButton)findViewById(R.id.button_toggle);
 		text_running_since = (TextView)findViewById(R.id.text_running_since);
+		last_server_response = (TextView)findViewById(R.id.last_server_response);
 
 		preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		if (preferences.contains("URL") && ! preferences.getString("URL", "").equals("")) {
@@ -112,6 +120,8 @@ public class SelfHostedGPSTrackerActivity extends Activity implements LocationLi
 		updateNetworkStatus();
 		
 		updateServiceStatus();
+
+		updateServerResponse();
 	}
 
 	@Override
@@ -207,6 +217,14 @@ public class SelfHostedGPSTrackerActivity extends Activity implements LocationLi
 		} else {
 			text_network_status.setText(getString(R.string.text_network_status_disabled));
 			text_network_status.setTextColor(Color.RED);
+		}
+	}
+
+	private void updateServerResponse() {
+		if (SelfHostedGPSTrackerService.lastServerResponse != null) {
+			last_server_response.setText(
+					Html.fromHtml(SelfHostedGPSTrackerService.lastServerResponse)
+			);
 		}
 	}
 }

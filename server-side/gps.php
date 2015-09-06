@@ -9,6 +9,7 @@ if ( isset($_GET["lat"]) && preg_match("/^-?\d+.\d+$/", $_GET["lat"])
 	fclose($f);
     echo "OK";
 } else {
+    header('HTTP/1.0 400 Bad Request');
     echo 'Please type this URL in the <a href="https://play.google.com/store/apps/details?id=fr.herverenault.selfhostedgpstracker">Self-Hosted GPS Tracker</a> Android app on your phone.';
 }
 

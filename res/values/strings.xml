@@ -23,7 +23,7 @@
     
     <string name="text_legend_url_0">Send GPS coordinates to :</string>
     <string name="text_legend_url_1">Example: http://herverenault.fr/gps</string>
-    <string name="text_legend_url_2">latitude and longitude added automatically</string>
+    <string name="text_legend_url_2">Latitude and longitude added automatically</string>
     <string name="text_legend_url_3">as in http://herverenault.fr/gps?lat=…&amp;lon=…</string>
     
     <string name="text_network_status">Unknown network status</string>
@@ -41,4 +41,15 @@
 	<string name="toast_service_running">Tracker is on</string>
 	<string name="toast_service_stopped">Tracker is off</string>
 	<string name="toast_prefs_restart">Don\'t forget to restart tracking!</string>
+
+    <string name="waiting_for_gps_data">Waiting for GPS data</string>
+    <string name="last_location_sent_at">Last location sent at</string>
+    <string name="http_request_ok">OK</string>
+    <string name="http_request_failed">failed</string>
+
+    <string name="error_malformed_url">Invalid URL</string>
+    <string name="error_unknown_host">Unknown host or network down</string>
+    <string name="error_ssl">HTTPS connexion problem</string>
+    <string name="error_timeout">HTTP timeout</string>
+
 </resources>
