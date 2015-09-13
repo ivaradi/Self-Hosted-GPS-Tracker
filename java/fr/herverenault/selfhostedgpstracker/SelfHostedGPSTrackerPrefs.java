@@ -24,7 +24,7 @@ public class SelfHostedGPSTrackerPrefs extends PreferenceActivity {
 			public boolean onPreferenceChange(Preference preference, Object newValue) {
 				SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 				int oldValue = Integer.parseInt(preferences.getString("pref_gps_updates", "0"));
-				if (newValue == null 
+				if (newValue == null
 						|| newValue.toString().length() == 0
                         || ! Pattern.matches("^\\d{1,5}$", newValue.toString())) {
                     Toast.makeText(getApplicationContext(), getString(R.string.invalid_number), Toast.LENGTH_SHORT).show();
@@ -48,17 +48,30 @@ public class SelfHostedGPSTrackerPrefs extends PreferenceActivity {
 				SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 				int prefGpsUpdates = Integer.parseInt(preferences.getString("pref_gps_updates", "0")); // seconds
 				int oldValue = Integer.parseInt(preferences.getString("pref_max_run_time", "0"));
-				if (newValue == null 
+				if (newValue == null
 						|| newValue.toString().length() == 0
-                        || ! Pattern.matches("^\\d{1,5}$", newValue.toString())) {
-                    Toast.makeText(getApplicationContext(), getString(R.string.invalid_number), Toast.LENGTH_SHORT).show();
-                    return false;
-                }
-                else if (Integer.parseInt(newValue.toString()) * 3600 < prefGpsUpdates) { // would not make sense...
-			        Toast.makeText(getApplicationContext(), getString(R.string.pref_max_run_time_too_low), Toast.LENGTH_LONG).show();
-			        return false;
+						|| !Pattern.matches("^\\d{1,5}$", newValue.toString())) {
+					Toast.makeText(getApplicationContext(), getString(R.string.invalid_number), Toast.LENGTH_SHORT).show();
+					return false;
+				} else if (Integer.parseInt(newValue.toString()) * 3600 < prefGpsUpdates) { // would not make sense...
+					Toast.makeText(getApplicationContext(), getString(R.string.pref_max_run_time_too_low), Toast.LENGTH_LONG).show();
+					return false;
 				} else if (SelfHostedGPSTrackerService.isRunning
 						&& Integer.parseInt(newValue.toString()) != oldValue) {
+					Toast.makeText(getApplicationContext(), getString(R.string.toast_prefs_restart), Toast.LENGTH_SHORT).show();
+				}
+				return true;
+			}
+		});
+
+		pref = findPreference("pref_timestamp");
+		pref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+			@Override
+			public boolean onPreferenceChange(Preference preference, Object newValue) {
+				SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+				boolean oldValue = preferences.getBoolean("pref_timestamp", false);
+				if (SelfHostedGPSTrackerService.isRunning
+						&& (Boolean) newValue != oldValue) {
 					Toast.makeText(getApplicationContext(), getString(R.string.toast_prefs_restart), Toast.LENGTH_SHORT).show();
 				}
 				return true;

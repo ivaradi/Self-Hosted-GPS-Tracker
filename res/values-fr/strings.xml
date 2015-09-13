@@ -20,7 +20,10 @@
     <string name="pref_max_run_time">Temps maxi d\'exécution (heures)</string>
     <string name="pref_max_run_time_summary">(8 heures par défaut)</string>
     <string name="pref_max_run_time_too_low">Désolé, cette valeur est trop basse</string>
-    
+
+    <string name="pref_timestamp">Horodater chaque requête</string>
+    <string name="pref_timestamp_summary">Ajoute un paramètre t=(millisecondes)</string>
+
     <string name="text_legend_url_0">Envoyer ma position à :</string>
     <string name="text_legend_url_1">Exemple: http://herverenault.fr/gps</string>
     <string name="text_legend_url_2">Latitude et longitude ajoutées automatiquement</string>

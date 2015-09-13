@@ -43,6 +43,7 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
 	private int pref_gps_updates;
 	private long latestUpdate;
 	private int pref_max_run_time;
+	private boolean pref_timestamp;
 
 	public SelfHostedGPSTrackerService() {
 		super("SelfHostedGPSTrackerService");
@@ -66,6 +67,7 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
 		editor.commit();
 		pref_gps_updates = Integer.parseInt(preferences.getString("pref_gps_updates", "30")); // seconds
 		pref_max_run_time = Integer.parseInt(preferences.getString("pref_max_run_time", "24")); // hours
+		pref_timestamp = preferences.getBoolean("pref_timestamp", false);
 		urlText = preferences.getString("URL", "");
 		if (urlText.contains("?")) {
 			urlText = urlText + "&"; 
@@ -131,14 +133,19 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
 	@Override
 	public void onLocationChanged(Location location) {
 		Log.d(MY_TAG, "in onLocationChanged, latestUpdate == " + latestUpdate);
-		
-		if ((System.currentTimeMillis() - latestUpdate) < pref_gps_updates*1000) {
+		long currentTime = System.currentTimeMillis();
+
+		if ((currentTime - latestUpdate) < pref_gps_updates*1000) {
 			return;
 		} else {
-			latestUpdate = System.currentTimeMillis();
+			latestUpdate = currentTime;
 		}
 		
-		new SelfHostedGPSTrackerRequest().execute("lat=" + location.getLatitude() + "&lon=" + location.getLongitude());
+		new SelfHostedGPSTrackerRequest().execute(
+				"lat=" + location.getLatitude()
+						+ "&lon=" + location.getLongitude()
+						+ ( pref_timestamp ? "&t=" + currentTime : "" )
+		);
 	}
 
 	@Override

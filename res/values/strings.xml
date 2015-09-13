@@ -20,6 +20,9 @@
     <string name="pref_max_run_time">Max run time (hours)</string>
     <string name="pref_max_run_time_summary">(defaults to 8 hours)</string>
     <string name="pref_max_run_time_too_low">Sorry, this value is lower than GPS updates</string>
+
+    <string name="pref_timestamp">Timestamp on each request</string>
+    <string name="pref_timestamp_summary">Add t=(milliseconds) to the parameters</string>
     
     <string name="text_legend_url_0">Send GPS coordinates to :</string>
     <string name="text_legend_url_1">Example: http://herverenault.fr/gps</string>

@@ -14,5 +14,11 @@
         android:title="@string/pref_max_run_time"
         android:summary="@string/pref_max_run_time_summary"
         android:defaultValue="8" />
-	
+
+    <CheckBoxPreference
+        android:key="pref_timestamp"
+        android:title="@string/pref_timestamp"
+        android:summary="@string/pref_timestamp_summary"
+        android:defaultValue="false" />
+
 </PreferenceScreen>
