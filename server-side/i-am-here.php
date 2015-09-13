@@ -14,15 +14,7 @@
 </head>
 <body>
 
-<?php
-$date = $lat = $lon = '';
-$date_lat_lon = rtrim(file_get_contents("/tmp/gps-position.txt"));
-if ($date_lat_lon) {
-	list($date, $lat, $lon) = explode("_", $date_lat_lon);
-}
-?>
-
-<h1>I was here on <span id="date"><?php echo $date ? $date : "…" ?></span></h1>
+<h1>I was here on <span id="date">…</span></h1>
 <p>(last known position where I had a GPS signal, a network connection, and some battery power)</p>
 
 <h2>Google Maps version</h2>
@@ -42,8 +34,9 @@ if ($date_lat_lon) {
 <script>
 var gmap, gmarker;
 var osmap, osmarker;
+var dte, lat, lon, utc;
 
-function createGMap(lat, lon) {
+function createGMap() {
 	var latlng = new google.maps.LatLng(lat, lon);
 	var myOptions = {
 	    zoom: 12,
@@ -63,7 +56,7 @@ function createGMap(lat, lon) {
 	});
 }
 
-function createOSMap(lat, lon) {
+function createOSMap() {
     osmap = L.map('openstreetmap').setView([lat, lon], 12);
 
     L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
@@ -77,13 +70,13 @@ function createOSMap(lat, lon) {
         .bindPopup("<p>GPS coordinates :</p><p>" + lat + ", " + lon + "</p>");
 }
 
-function updateGMap(dte, lat, lon) {
+function updateGMap() {
 	var latlng = new google.maps.LatLng(lat, lon);
 	gmarker.setPosition(latlng);
 	gmap.panTo(latlng);
 }
 
-function updateOSMap(dte, lat, lon) {
+function updateOSMap() {
     osmarker.setLatLng([lat, lon]);
     osmarker.bindPopup("<p>GPS coordinates :</p><p>" + lat + ", " + lon + "</p>");
     osmap.panTo([lat, lon]);
@@ -100,21 +93,24 @@ function doRefresh() {
 	xhr.onreadystatechange  = function() { 
 		if (xhr.readyState  == 4) {
 			if (xhr.status  == 200) {
-				dte = xhr.responseText.split('_')[0];
-				lat = xhr.responseText.split('_')[1];
-				lon = xhr.responseText.split('_')[2];
+				[dte, lat, lon, utc] = xhr.responseText.split('_');
 				if (dte && lat && lon) {
 					if (!gmap) {
-						createGMap(lat, lon);
+						createGMap();
 					} else {
-						updateGMap(dte, lat, lon);
+						updateGMap(lat, lon);
 					}
                     if (!osmap) {
-						createOSMap(lat, lon);
+						createOSMap();
 					} else {
-						updateOSMap(dte, lat, lon);
+						updateOSMap();
 					}
-	                document.querySelector("#date").innerHTML = dte;
+                    if (utc) {
+                        utc_dte = new Date(parseInt(utc));
+                        document.querySelector("#date").innerHTML = utc_dte.toLocaleDateString() + " " + utc_dte.toLocaleTimeString();
+                    } else {
+                        document.querySelector("#date").innerHTML = dte + " (server time)";
+                    }
 				}
 			}
 		}
@@ -123,11 +119,6 @@ function doRefresh() {
 	xhr.send(null);
 	setTimeout('doRefresh()', 30000);
 }
-
-<?php if ($lat && $lon): ?>
-createGMap(<?php echo $lat.",".$lon ?>);
-createOSMap(<?php echo $lat.",".$lon ?>);
-<?php endif; ?>
 
 doRefresh();
 
