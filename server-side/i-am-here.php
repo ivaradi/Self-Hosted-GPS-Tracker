@@ -93,7 +93,11 @@ function doRefresh() {
 	xhr.onreadystatechange  = function() { 
 		if (xhr.readyState  == 4) {
 			if (xhr.status  == 200) {
-				[dte, lat, lon, utc] = xhr.responseText.split('_');
+				var param = xhr.responseText.split('_');
+				dte = param[0];
+				lat = param[1];
+				lon = param[2];
+				utc = param[3];
 				if (dte && lat && lon) {
 					if (!gmap) {
 						createGMap();
