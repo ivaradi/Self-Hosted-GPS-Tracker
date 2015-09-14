@@ -111,7 +111,7 @@ function doRefresh() {
 					}
                     if (utc) {
                         utc_dte = new Date(parseInt(utc));
-                        document.querySelector("#date").innerHTML = utc_dte.toLocaleDateString() + " " + utc_dte.toLocaleTimeString();
+                        document.querySelector("#date").innerHTML = utc_dte.toLocaleString();
                     } else {
                         document.querySelector("#date").innerHTML = dte + " (server time)";
                     }
