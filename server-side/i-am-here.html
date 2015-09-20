@@ -19,9 +19,9 @@
 
 <h2>Google Maps version</h2>
 <div id="googlemap" style="width: 800px; height: 600px">
-	<div id="interlude" style="text-align: center; line-height: 600px; font-weight: bold; border: 1px dotted grey; background-color: #eee;">
-		Map currently unavailable.
-	</div>
+    <div id="interlude" style="text-align: center; line-height: 600px; font-weight: bold; border: 1px dotted grey; background-color: #eee;">
+        Map currently unavailable.
+    </div>
 </div>
 
 <h2>OpenStreetMap + Leaflet.js version</h2>
@@ -37,23 +37,23 @@ var osmap, osmarker;
 var dte, lat, lon, utc;
 
 function createGMap() {
-	var latlng = new google.maps.LatLng(lat, lon);
-	var myOptions = {
-	    zoom: 12,
-	    center: latlng,
-	    mapTypeControl: false,
-	    navigationControlOptions: {style: google.maps.NavigationControlStyle.SMALL},
-	    mapTypeId: google.maps.MapTypeId.ROADMAP
-	};
-	gmap = new google.maps.Map(document.getElementById("googlemap"), myOptions);
-	gmarker = new google.maps.Marker({
-	      position: latlng, 
-	      map: gmap, 
-	      title:"I'm here"
-	});
-	google.maps.event.addListener(gmarker, "click", function(e) {
-		alert("GPS coordinates:\nLatitude: " + gmarker.getPosition().lat() + "\nLongitude: " + gmarker.getPosition().lng());
-	});
+    var latlng = new google.maps.LatLng(lat, lon);
+    var myOptions = {
+        zoom: 12,
+        center: latlng,
+        mapTypeControl: false,
+        navigationControlOptions: {style: google.maps.NavigationControlStyle.SMALL},
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+    };
+    gmap = new google.maps.Map(document.getElementById("googlemap"), myOptions);
+    gmarker = new google.maps.Marker({
+          position: latlng,
+          map: gmap,
+          title:"I'm here"
+    });
+    google.maps.event.addListener(gmarker, "click", function(e) {
+        alert("GPS coordinates:\nLatitude: " + gmarker.getPosition().lat() + "\nLongitude: " + gmarker.getPosition().lng());
+    });
 }
 
 function createOSMap() {
@@ -71,9 +71,9 @@ function createOSMap() {
 }
 
 function updateGMap() {
-	var latlng = new google.maps.LatLng(lat, lon);
-	gmarker.setPosition(latlng);
-	gmap.panTo(latlng);
+    var latlng = new google.maps.LatLng(lat, lon);
+    gmarker.setPosition(latlng);
+    gmap.panTo(latlng);
 }
 
 function updateOSMap() {
@@ -83,45 +83,45 @@ function updateOSMap() {
 }
 
 function doRefresh() {
-	var xhr; 
-	try {
-		xhr = new XMLHttpRequest();
-	} catch (e) {
-		xhr = false;
-	}
+    var xhr;
+    try {
+        xhr = new XMLHttpRequest();
+    } catch (e) {
+        xhr = false;
+    }
 
-	xhr.onreadystatechange  = function() { 
-		if (xhr.readyState  == 4) {
-			if (xhr.status  == 200) {
-				var param = xhr.responseText.split('_');
-				dte = param[0];
-				lat = param[1];
-				lon = param[2];
-				utc = param[3];
-				if (dte && lat && lon) {
-					if (!gmap) {
-						createGMap();
-					} else {
-						updateGMap(lat, lon);
-					}
+    xhr.onreadystatechange  = function() {
+        if (xhr.readyState  == 4) {
+            if (xhr.status  == 200) {
+                var param = xhr.responseText.split('_');
+                dte = param[0];
+                lat = param[1];
+                lon = param[2];
+                utc = param[3];
+                if (dte && lat && lon) {
+                    if (!gmap) {
+                        createGMap();
+                    } else {
+                        updateGMap(lat, lon);
+                    }
                     if (!osmap) {
-						createOSMap();
-					} else {
-						updateOSMap();
-					}
+                        createOSMap();
+                    } else {
+                        updateOSMap();
+                    }
                     if (utc) {
                         utc_dte = new Date(parseInt(utc));
                         document.querySelector("#date").innerHTML = utc_dte.toLocaleString();
                     } else {
                         document.querySelector("#date").innerHTML = dte + " (server time)";
                     }
-				}
-			}
-		}
-	};
-	xhr.open("GET", "i-am-here-position.php?" + Math.random(),  true); 
-	xhr.send(null);
-	setTimeout('doRefresh()', 30000);
+                }
+            }
+        }
+    };
+    xhr.open("GET", "i-am-here-position.php?" + Math.random(),  true);
+    xhr.send(null);
+    setTimeout('doRefresh()', 30000);
 }
 
 doRefresh();

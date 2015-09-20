@@ -41,9 +41,9 @@
     <string name="text_stopped_on">Arrêté depuis le</string>
     <string name="text_killed">Android a stoppé l\'application</string>
     
-	<string name="toast_service_running">Le traceur est en marche</string>
-	<string name="toast_service_stopped">Le traceur est arrếté</string>
-	<string name="toast_prefs_restart">N\'oubliez pas de redémarrer le traceur !</string>
+    <string name="toast_service_running">Le traceur est en marche</string>
+    <string name="toast_service_stopped">Le traceur est arrếté</string>
+    <string name="toast_prefs_restart">N\'oubliez pas de redémarrer le traceur !</string>
 
     <string name="waiting_for_gps_data">En attente de données GPS</string>
     <string name="last_location_sent_at">Dernière position envoyée à</string>
@@ -54,5 +54,5 @@
     <string name="error_unknown_host">Serveur inconnu ou pas de réseau</string>
     <string name="error_ssl">Problème de connexion HTTPS</string>
     <string name="error_timeout">Temps d\'attente dépassé</string>
-	
+
 </resources>
