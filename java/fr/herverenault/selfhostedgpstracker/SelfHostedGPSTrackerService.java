@@ -135,7 +135,9 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
         Log.d(MY_TAG, "in onLocationChanged, latestUpdate == " + latestUpdate);
         long currentTime = System.currentTimeMillis();
 
-        if ((currentTime - latestUpdate) < pref_gps_updates*1000) {
+        // Tolerate devices which sometimes send GPS updates 1 second too early,
+        // such as HTC One Mini...
+        if ((currentTime - latestUpdate) < (pref_gps_updates - 1) * 1000) {
             return;
         } else {
             latestUpdate = currentTime;
