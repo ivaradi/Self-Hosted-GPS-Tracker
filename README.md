@@ -19,6 +19,8 @@ This app is NOT meant to be a stealth tracker, or to be forced upon a user. So, 
 I put a demo on http://herverenault.fr/self-hosted-gps-tracker/demo/i-am-here
 To see your position on this page, enter http://herverenault.fr/gps in the app on your phone (or tablet). It's an anonymous URL, so if you're not the only one doing it, you may see the location of another anonymous user.
 
+Works on Android 2, 4 and 5.
+
 Side-note: There are plenty of apps which do the same, for example Open GPS Tracker. But I wanted an app
 * which sends my position to my server, and only my server
 * which does not download any map on my phone and thus does not go over my 3G plan
