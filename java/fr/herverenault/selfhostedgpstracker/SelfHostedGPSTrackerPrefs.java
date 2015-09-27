@@ -25,11 +25,15 @@ public class SelfHostedGPSTrackerPrefs extends PreferenceActivity {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                int prefMaxRunTime = Integer.parseInt(preferences.getString("pref_max_run_time", "0")); // hours
                 int oldValue = Integer.parseInt(preferences.getString("pref_gps_updates", "0"));
                 if (newValue == null
                         || newValue.toString().length() == 0
                         || !Pattern.matches("^\\d{1,5}$", newValue.toString())) {
                     Alert(getString(R.string.invalid_number));
+                    return false;
+                } else if (Integer.parseInt(newValue.toString()) > prefMaxRunTime * 3600) { // would not make sense...
+                    Alert(getString(R.string.pref_gps_updates_too_high));
                     return false;
                 } else if (Integer.parseInt(newValue.toString()) < 5) {
                     Alert(getString(R.string.pref_gps_updates_too_low));

@@ -16,6 +16,7 @@
     <string name="pref_gps_updates">GPS Updates (seconds)</string>
     <string name="pref_gps_updates_summary">Update GPS position approximately every… (5 seconds minimum)</string>
     <string name="pref_gps_updates_too_low">Sorry, this value is too low.</string>
+    <string name="pref_gps_updates_too_high">Sorry, this value is greater than max run time.</string>
     <string name="pref_battery_drain">Watch out! Values below 30s can drain your battery.</string>
 
     <string name="pref_max_run_time">Max run time (hours)</string>

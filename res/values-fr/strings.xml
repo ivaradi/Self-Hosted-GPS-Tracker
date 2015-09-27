@@ -16,6 +16,7 @@
     <string name="pref_gps_updates">Mises à jour GPS (secondes)</string>
     <string name="pref_gps_updates_summary">Met à jour la position GPS toutes les… (5 secondes mini)</string>
     <string name="pref_gps_updates_too_low">Désolé, cette valeur est trop basse.</string>
+    <string name="pref_gps_updates_too_high">Désolé, cette valeur dépasse le temps maxi d\'exécution.</string>
     <string name="pref_battery_drain">Attention ! Une valeur inférieure à 30 s peut vider votre batterie.</string>
 
     <string name="pref_max_run_time">Temps maxi d\'exécution (heures)</string>
