@@ -1,5 +1,7 @@
 package fr.herverenault.selfhostedgpstracker;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.Preference;
@@ -26,16 +28,17 @@ public class SelfHostedGPSTrackerPrefs extends PreferenceActivity {
                 int oldValue = Integer.parseInt(preferences.getString("pref_gps_updates", "0"));
                 if (newValue == null
                         || newValue.toString().length() == 0
-                        || ! Pattern.matches("^\\d{1,5}$", newValue.toString())) {
-                    Toast.makeText(getApplicationContext(), getString(R.string.invalid_number), Toast.LENGTH_SHORT).show();
+                        || !Pattern.matches("^\\d{1,5}$", newValue.toString())) {
+                    Alert(getString(R.string.invalid_number));
                     return false;
-                }
-                else if (Integer.parseInt(newValue.toString()) < 30) { // user has been warned
-                    Toast.makeText(getApplicationContext(), getString(R.string.pref_gps_updates_too_low), Toast.LENGTH_SHORT).show();
+                } else if (Integer.parseInt(newValue.toString()) < 5) {
+                    Alert(getString(R.string.pref_gps_updates_too_low));
                     return false;
+                } else if (Integer.parseInt(newValue.toString()) < 30) {
+                    Alert(getString(R.string.pref_battery_drain));
                 } else if (SelfHostedGPSTrackerService.isRunning
                         && Integer.parseInt(newValue.toString()) != oldValue) {
-                    Toast.makeText(getApplicationContext(), getString(R.string.toast_prefs_restart), Toast.LENGTH_LONG).show();
+                    Alert(getString(R.string.toast_prefs_restart));
                 }
                 return true;
             }
@@ -51,14 +54,14 @@ public class SelfHostedGPSTrackerPrefs extends PreferenceActivity {
                 if (newValue == null
                         || newValue.toString().length() == 0
                         || !Pattern.matches("^\\d{1,5}$", newValue.toString())) {
-                    Toast.makeText(getApplicationContext(), getString(R.string.invalid_number), Toast.LENGTH_SHORT).show();
+                    Alert(getString(R.string.invalid_number));
                     return false;
                 } else if (Integer.parseInt(newValue.toString()) * 3600 < prefGpsUpdates) { // would not make sense...
-                    Toast.makeText(getApplicationContext(), getString(R.string.pref_max_run_time_too_low), Toast.LENGTH_LONG).show();
+                    Alert(getString(R.string.pref_max_run_time_too_low));
                     return false;
                 } else if (SelfHostedGPSTrackerService.isRunning
                         && Integer.parseInt(newValue.toString()) != oldValue) {
-                    Toast.makeText(getApplicationContext(), getString(R.string.toast_prefs_restart), Toast.LENGTH_SHORT).show();
+                    Alert(getString(R.string.toast_prefs_restart));
                 }
                 return true;
             }
@@ -72,10 +75,22 @@ public class SelfHostedGPSTrackerPrefs extends PreferenceActivity {
                 boolean oldValue = preferences.getBoolean("pref_timestamp", false);
                 if (SelfHostedGPSTrackerService.isRunning
                         && (Boolean) newValue != oldValue) {
-                    Toast.makeText(getApplicationContext(), getString(R.string.toast_prefs_restart), Toast.LENGTH_SHORT).show();
+                    Alert(getString(R.string.toast_prefs_restart));
                 }
                 return true;
             }
         });
+    }
+
+    private void Alert(String message) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(SelfHostedGPSTrackerPrefs.this);
+        builder.setMessage(message)
+                .setCancelable(false)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
     }
 }

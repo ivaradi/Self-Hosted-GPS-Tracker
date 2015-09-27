@@ -14,12 +14,13 @@
     <string name="menu_settings">Réglages</string>
     
     <string name="pref_gps_updates">Mises à jour GPS (secondes)</string>
-    <string name="pref_gps_updates_summary">Met à jour la position GPS toutes les… (30 secondes mini)</string>
-    <string name="pref_gps_updates_too_low">Désolé, cette valeur est trop basse</string>
+    <string name="pref_gps_updates_summary">Met à jour la position GPS toutes les… (5 secondes mini)</string>
+    <string name="pref_gps_updates_too_low">Désolé, cette valeur est trop basse.</string>
+    <string name="pref_battery_drain">Attention ! Une valeur inférieure à 30 s peut vider votre batterie.</string>
 
     <string name="pref_max_run_time">Temps maxi d\'exécution (heures)</string>
     <string name="pref_max_run_time_summary">(8 heures par défaut)</string>
-    <string name="pref_max_run_time_too_low">Désolé, cette valeur est trop basse</string>
+    <string name="pref_max_run_time_too_low">Désolé, cette valeur est inférieure à l\'intervalle de mise à jour de la position.</string>
 
     <string name="pref_timestamp">Horodater chaque requête</string>
     <string name="pref_timestamp_summary">Ajoute un paramètre t=(millisecondes)</string>
