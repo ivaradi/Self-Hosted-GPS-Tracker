@@ -82,7 +82,7 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
         notifIntent.putExtra(NOTIFICATION, "START");
         sendBroadcast(notifIntent);
 
-        new SelfHostedGPSTrackerRequest().execute("tracker=start");
+        new SelfHostedGPSTrackerRequest().start("tracker=start");
     }
 
     @Override
@@ -113,7 +113,7 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
     public void onDestroy() {
         // (user clicked the stop button, or max run time has been reached)
         Log.d(MY_TAG, "in onDestroy, stop listening to the GPS");
-        new SelfHostedGPSTrackerRequest().execute("tracker=stop");
+        new SelfHostedGPSTrackerRequest().start("tracker=stop");
 
         locationManager.removeUpdates(this);
 
@@ -139,11 +139,11 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
         // such as HTC One Mini...
         if ((currentTime - latestUpdate) < (pref_gps_updates - 1) * 1000) {
             return;
-        } else {
-            latestUpdate = currentTime;
         }
 
-        new SelfHostedGPSTrackerRequest().execute(
+        latestUpdate = currentTime;
+
+        new SelfHostedGPSTrackerRequest().start(
                 "lat=" + location.getLatitude()
                         + "&lon=" + location.getLongitude()
                         + ( pref_timestamp ? "&t=" + currentTime : "" )
@@ -162,15 +162,16 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
     public void onStatusChanged(String provider, int status, Bundle extras) {
     }
 
-    private class SelfHostedGPSTrackerRequest extends AsyncTask<String, Void, Void> {
+    private class SelfHostedGPSTrackerRequest extends Thread {
         private final static String MY_TAG = "SelfHostedGPSTrackerReq";
+        private String params;
 
-        protected Void doInBackground(String... params) {
+        public void run() {
             String message;
             int code = 0;
 
             try {
-                URL url = new URL(urlText + params[0]);
+                URL url = new URL(urlText + params);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setReadTimeout(10000 /* milliseconds */);
                 conn.setConnectTimeout(15000 /* milliseconds */);
@@ -201,7 +202,7 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
                 }
             }
 
-            if (!params[0].startsWith("tracker=")) {
+            if ( ! params.startsWith("tracker=")) {
                 lastServerResponse = getResources().getString(R.string.last_location_sent_at)
                         + " "
                         + DateFormat.getTimeInstance().format(new Date())
@@ -223,8 +224,11 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
                 notifIntent.putExtra(NOTIFICATION, "HTTP");
                 sendBroadcast(notifIntent);
             }
+        }
 
-            return null;
+        public void start(String params) {
+            this.params = params;
+            super.start();
         }
     }
 }
