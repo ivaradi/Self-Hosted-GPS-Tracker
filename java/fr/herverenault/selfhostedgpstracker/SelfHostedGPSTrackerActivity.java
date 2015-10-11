@@ -122,6 +122,12 @@ public class SelfHostedGPSTrackerActivity extends Activity implements LocationLi
         updateServiceStatus();
 
         updateServerResponse();
+
+        if (SelfHostedGPSTrackerService.isRunning) {
+            edit_url.setEnabled(false);
+        } else {
+            edit_url.setEnabled(true);
+        }
     }
 
     @Override
@@ -159,8 +165,10 @@ public class SelfHostedGPSTrackerActivity extends Activity implements LocationLi
         Intent intent = new Intent(this, SelfHostedGPSTrackerService.class);
         if (((ToggleButton) view).isChecked()) {
             startService(intent);
+            edit_url.setEnabled(false);
         } else {
             stopService(intent);
+            edit_url.setEnabled(true);
         }
     }
 
