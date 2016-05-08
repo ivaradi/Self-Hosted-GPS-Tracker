@@ -3,9 +3,14 @@ package fr.herverenault.selfhostedgpstracker;
 import android.app.IntentService;
 import android.app.Notification;
 import android.app.PendingIntent;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -83,7 +88,7 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
         sendBroadcast(notifIntent);
 
         long currentTime = System.currentTimeMillis();
-        new SelfHostedGPSTrackerRequest().start("tracker=start&t=" + currentTime);
+        new SelfHostedGPSTrackerRequest(getApplicationContext()).start("tracker=start&t=" + currentTime);
     }
 
     @Override
@@ -115,7 +120,7 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
         // (user clicked the stop button, or max run time has been reached)
         Log.d(MY_TAG, "in onDestroy, stop listening to the GPS");
         long currentTime = System.currentTimeMillis();
-        new SelfHostedGPSTrackerRequest().start("tracker=stop&t=" + currentTime);
+        new SelfHostedGPSTrackerRequest(getApplicationContext()).start("tracker=stop&t=" + currentTime);
 
         locationManager.removeUpdates(this);
 
@@ -145,7 +150,7 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
 
         latestUpdate = currentTime;
 
-        new SelfHostedGPSTrackerRequest().start(
+        new SelfHostedGPSTrackerRequest(getApplicationContext()).start(
                 "lat=" + location.getLatitude()
                 + "&lon=" + location.getLongitude()
                 + "&alt=" + location.getAltitude ()
@@ -166,14 +171,79 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
     public void onStatusChanged(String provider, int status, Bundle extras) {
     }
 
+    private class PendingOpenHelper extends SQLiteOpenHelper {
+        private static final int VERSION = 1;
+
+        public PendingOpenHelper(Context context) {
+            super(context, "gpstracker", null, VERSION);
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            db.execSQL("CREATE TABLE pending (" +
+                       "status INT, " +
+                       "params TEXT);");
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        }
+
+    };
+
+    private static long dbAddPending(SQLiteDatabase db, String params) {
+        ContentValues values = new ContentValues();
+        values.put("status", 2);
+        values.put("params", params);
+        try {
+            return db.insertOrThrow("pending", null, values);
+        } catch(SQLException e) {
+            Log.d(MY_TAG, "Failed to add pending row: " + e);
+            return -1;
+        }
+    }
+
+    private static int dbDelete(SQLiteDatabase db, long rowID) {
+        try {
+            return db.delete("pending", "rowid=" + rowID, null);
+        } catch(SQLException e) {
+            Log.d(MY_TAG, "Failed to delete pending row: " + e);
+            return -1;
+        }
+    }
+
+    private static int dbMarkFailed(SQLiteDatabase db, long rowID) {
+        ContentValues values = new ContentValues();
+        values.put("status", 1);
+        try {
+            return db.update("pending", values, "rowid=" + rowID, null);
+        } catch(SQLException e) {
+            Log.d(MY_TAG, "Failed to mark row failed: " + e);
+            return -1;
+        }
+    }
+
     private class SelfHostedGPSTrackerRequest extends Thread {
         private final static String MY_TAG = "SelfHostedGPSTrackerReq";
         private String params;
+        private Context context;
+        private long rowID = -1;
+        private SQLiteDatabase database = null;
+
+        public SelfHostedGPSTrackerRequest(Context context) {
+            this.context = context;
+        }
 
         public void run() {
             String message;
             int code = 0;
 
+            openDatabase();
+            if (rowID==-1 && database!=null) {
+                rowID = dbAddPending(database, params);
+            }
+
+            boolean isOK = false;
             try {
                 URL url = new URL(urlText + params);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -185,6 +255,7 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
                 code = conn.getResponseCode();
                 Log.d(MY_TAG, "HTTP request done: " + code);
                 message = "HTTP " + code;
+                isOK = code == 200;
             }
             catch (MalformedURLException e) {
                 message = getResources().getString(R.string.error_malformed_url);
@@ -203,6 +274,14 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
                 message = e.getLocalizedMessage();
                 if (message == null) {
                     message = e.toString();
+                }
+            }
+
+            if (rowID!=-1) {
+                if (isOK) {
+                    dbDelete(database, rowID);
+                } else {
+                    dbMarkFailed(database, rowID);
                 }
             }
 
@@ -233,6 +312,17 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
         public void start(String params) {
             this.params = params;
             super.start();
+        }
+
+        private void openDatabase() {
+            if (database==null) {
+                SQLiteOpenHelper sqliteHelper = new PendingOpenHelper(context);
+                try {
+                    database = sqliteHelper.getWritableDatabase();
+                } catch(SQLException e) {
+                    Log.d(MY_TAG, "Opening of SQLite database failed: " + e);
+                }
+            }
         }
     }
 }
