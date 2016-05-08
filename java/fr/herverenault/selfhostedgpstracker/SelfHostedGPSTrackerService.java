@@ -82,7 +82,8 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
         notifIntent.putExtra(NOTIFICATION, "START");
         sendBroadcast(notifIntent);
 
-        new SelfHostedGPSTrackerRequest().start("tracker=start");
+        long currentTime = System.currentTimeMillis();
+        new SelfHostedGPSTrackerRequest().start("tracker=start&t=" + currentTime);
     }
 
     @Override
@@ -113,7 +114,8 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
     public void onDestroy() {
         // (user clicked the stop button, or max run time has been reached)
         Log.d(MY_TAG, "in onDestroy, stop listening to the GPS");
-        new SelfHostedGPSTrackerRequest().start("tracker=stop");
+        long currentTime = System.currentTimeMillis();
+        new SelfHostedGPSTrackerRequest().start("tracker=stop&t=" + currentTime);
 
         locationManager.removeUpdates(this);
 
@@ -145,12 +147,11 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
 
         new SelfHostedGPSTrackerRequest().start(
                 "lat=" + location.getLatitude()
-                        + "&lon=" + location.getLongitude()
-                        + "&alt=" + location.getAltitude ()
-                        + "&spd=" + location.getSpeed ()
-                        + "&brg=" + location.getBearing ()
-                        + ( pref_timestamp ? "&t=" + currentTime : "" )
-        );
+                + "&lon=" + location.getLongitude()
+                + "&alt=" + location.getAltitude ()
+                + "&spd=" + location.getSpeed ()
+                + "&brg=" + location.getBearing ()
+                + "&t=" + currentTime );
     }
 
     @Override
