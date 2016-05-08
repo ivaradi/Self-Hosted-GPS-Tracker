@@ -146,6 +146,9 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
         new SelfHostedGPSTrackerRequest().start(
                 "lat=" + location.getLatitude()
                         + "&lon=" + location.getLongitude()
+                        + "&alt=" + location.getAltitude ()
+                        + "&spd=" + location.getSpeed ()
+                        + "&brg=" + location.getBearing ()
                         + ( pref_timestamp ? "&t=" + currentTime : "" )
         );
     }
