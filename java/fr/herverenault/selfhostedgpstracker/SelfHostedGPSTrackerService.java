@@ -18,6 +18,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.util.Pair;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -27,6 +28,7 @@ import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Vector;
 
 import javax.net.ssl.SSLHandshakeException;
 
@@ -54,6 +56,16 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
         super("SelfHostedGPSTrackerService");
     }
 
+    private static String getURLText(SharedPreferences preferences) {
+        String urlText = preferences.getString("URL", "");
+        if (urlText.contains("?")) {
+            urlText = urlText + "&";
+        } else {
+            urlText = urlText + "?";
+        }
+        return urlText;
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -73,12 +85,7 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
         pref_gps_updates = Integer.parseInt(preferences.getString("pref_gps_updates", "30")); // seconds
         pref_max_run_time = Integer.parseInt(preferences.getString("pref_max_run_time", "24")); // hours
         pref_timestamp = preferences.getBoolean("pref_timestamp", false);
-        urlText = preferences.getString("URL", "");
-        if (urlText.contains("?")) {
-            urlText = urlText + "&";
-        } else {
-            urlText = urlText + "?";
-        }
+        urlText = getURLText(preferences);
 
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, pref_gps_updates * 1000, 1, this);
 
@@ -88,7 +95,8 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
         sendBroadcast(notifIntent);
 
         long currentTime = System.currentTimeMillis();
-        new SelfHostedGPSTrackerRequest(getApplicationContext()).start("tracker=start&t=" + currentTime);
+        new SelfHostedGPSTrackerRequest(getApplicationContext(),
+                                        urlText).start("tracker=start&t=" + currentTime);
     }
 
     @Override
@@ -120,7 +128,8 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
         // (user clicked the stop button, or max run time has been reached)
         Log.d(MY_TAG, "in onDestroy, stop listening to the GPS");
         long currentTime = System.currentTimeMillis();
-        new SelfHostedGPSTrackerRequest(getApplicationContext()).start("tracker=stop&t=" + currentTime);
+        new SelfHostedGPSTrackerRequest(getApplicationContext(),
+                                        urlText).start("tracker=stop&t=" + currentTime);
 
         locationManager.removeUpdates(this);
 
@@ -150,7 +159,8 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
 
         latestUpdate = currentTime;
 
-        new SelfHostedGPSTrackerRequest(getApplicationContext()).start(
+        new SelfHostedGPSTrackerRequest(getApplicationContext(),
+                                        urlText).start(
                 "lat=" + location.getLatitude()
                 + "&lon=" + location.getLongitude()
                 + "&alt=" + location.getAltitude ()
@@ -171,7 +181,7 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
     public void onStatusChanged(String provider, int status, Bundle extras) {
     }
 
-    private class PendingOpenHelper extends SQLiteOpenHelper {
+    private static class PendingOpenHelper extends SQLiteOpenHelper {
         private static final int VERSION = 1;
 
         public PendingOpenHelper(Context context) {
@@ -190,6 +200,16 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
         }
 
     };
+
+    private static SQLiteDatabase dbOpen(Context context) {
+        SQLiteOpenHelper sqliteHelper = new PendingOpenHelper(context);
+        try {
+            return sqliteHelper.getWritableDatabase();
+        } catch(SQLException e) {
+            Log.d(MY_TAG, "Opening of SQLite database failed: " + e);
+            return null;
+        }
+    }
 
     private static long dbAddPending(SQLiteDatabase db, String params) {
         ContentValues values = new ContentValues();
@@ -223,24 +243,68 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
         }
     }
 
-    private class SelfHostedGPSTrackerRequest extends Thread {
+    private static boolean dbGetFailed(Vector<Pair<Long, String>> result,
+                                       SQLiteDatabase db) {
+        try {
+            String[] columns = new String[2];
+            columns[0] = "rowid";
+            columns[1] = "params";
+            Cursor cursor = db.query("pending", columns,
+                                     "status=1", null,
+                                     null, null, null, null);
+            while (cursor.moveToNext()) {
+                result.add(new Pair<Long, String>(cursor.getLong(0),
+                                                  cursor.getString(1)));
+            }
+            cursor.close();
+            return true;
+        } catch(SQLException e) {
+            Log.d(MY_TAG, "Failed to get the params for a row: " + e);
+            return false;
+        }
+    }
+
+    private static String dbGetParams(SQLiteDatabase db, long rowID) {
+        String params = null;
+        try {
+            String[] columns = new String[1];
+            columns[0] = "params";
+            Cursor result = db.query("pending", columns,
+                                     "rowid=" + rowID, null,
+                                     null, null, null, null);
+            if (result.moveToNext()) {
+                params = result.getString(0);
+            }
+            result.close();
+        } catch(SQLException e) {
+            Log.d(MY_TAG, "Failed to get the params for a row: " + e);
+        }
+        return params;
+    }
+
+    private static class SelfHostedGPSTrackerRequest extends Thread {
         private final static String MY_TAG = "SelfHostedGPSTrackerReq";
         private String params;
         private Context context;
         private long rowID = -1;
         private SQLiteDatabase database = null;
+        private String urlText;
 
-        public SelfHostedGPSTrackerRequest(Context context) {
+        public SelfHostedGPSTrackerRequest(Context context,
+                                           String urlText) {
             this.context = context;
+            this.urlText = urlText;
         }
 
         public void run() {
             String message;
             int code = 0;
 
-            openDatabase();
-            if (rowID==-1 && database!=null) {
-                rowID = dbAddPending(database, params);
+            if (rowID==-1) {
+                openDatabase();
+                if (database!=null) {
+                    rowID = dbAddPending(database, params);
+                }
             }
 
             boolean isOK = false;
@@ -258,16 +322,16 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
                 isOK = code == 200;
             }
             catch (MalformedURLException e) {
-                message = getResources().getString(R.string.error_malformed_url);
+                message = context.getResources().getString(R.string.error_malformed_url);
             }
             catch (UnknownHostException e) {
-                message = getResources().getString(R.string.error_unknown_host);
+                message = context.getResources().getString(R.string.error_unknown_host);
             }
             catch (SSLHandshakeException e) {
-                message = getResources().getString(R.string.error_ssl);
+                message = context.getResources().getString(R.string.error_ssl);
             }
             catch (SocketTimeoutException e) {
-                message = getResources().getString(R.string.error_timeout);
+                message = context.getResources().getString(R.string.error_timeout);
             }
             catch (Exception e) {
                 Log.d(MY_TAG, "HTTP request failed: " + e);
@@ -278,26 +342,29 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
             }
 
             if (rowID!=-1) {
-                if (isOK) {
-                    dbDelete(database, rowID);
-                } else {
-                    dbMarkFailed(database, rowID);
+                openDatabase();
+                if (database!=null) {
+                    if (isOK) {
+                        dbDelete(database, rowID);
+                    } else {
+                        dbMarkFailed(database, rowID);
+                    }
                 }
             }
 
             if ( ! params.startsWith("tracker=")) {
-                lastServerResponse = getResources().getString(R.string.last_location_sent_at)
+                lastServerResponse = context.getResources().getString(R.string.last_location_sent_at)
                         + " "
                         + DateFormat.getTimeInstance().format(new Date())
                         + " ";
 
                 if (code == 200) {
                     lastServerResponse += "<font color='#00aa00'><b>"
-                            + getResources().getString(R.string.http_request_ok)
+                            + context.getResources().getString(R.string.http_request_ok)
                             + "</b></font>";
                 } else {
                     lastServerResponse += "<font color='#ff0000'><b>"
-                            + getResources().getString(R.string.http_request_failed)
+                            + context.getResources().getString(R.string.http_request_failed)
                             + "</b></font>"
                             + "<br>"
                             + "(" + message + ")";
@@ -305,8 +372,10 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
 
                 Intent notifIntent = new Intent(NOTIFICATION);
                 notifIntent.putExtra(NOTIFICATION, "HTTP");
-                sendBroadcast(notifIntent);
+                context.sendBroadcast(notifIntent);
             }
+
+            if (database!=null) database.close();
         }
 
         public void start(String params) {
@@ -314,15 +383,43 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
             super.start();
         }
 
+        public void start(long rowID, String params) {
+            this.rowID = rowID;
+            this.params = params;
+            super.start();
+        }
+
         private void openDatabase() {
             if (database==null) {
-                SQLiteOpenHelper sqliteHelper = new PendingOpenHelper(context);
-                try {
-                    database = sqliteHelper.getWritableDatabase();
-                } catch(SQLException e) {
-                    Log.d(MY_TAG, "Opening of SQLite database failed: " + e);
+                database = dbOpen(context);
+            }
+        }
+    }
+
+    public static class SelfHostedGPSTrackerFlushThread extends Thread {
+        Context context;
+
+        public SelfHostedGPSTrackerFlushThread(Context context) {
+            this.context = context;
+        }
+
+        public void run() {
+            SharedPreferences preferences =
+                PreferenceManager.getDefaultSharedPreferences(context);
+            String urlText = getURLText(preferences);
+
+            SQLiteDatabase database = dbOpen(context);
+            if (database==null) return;
+
+            Vector<Pair<Long, String>> result = new Vector<Pair<Long, String>>();
+            if (dbGetFailed(result, database)) {
+                for(Pair<Long, String> pair : result) {
+                    new SelfHostedGPSTrackerRequest(context,
+                                                    urlText).start(pair.first,
+                                                                   pair.second);
                 }
             }
+            database.close();
         }
     }
 }

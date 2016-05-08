@@ -118,11 +118,26 @@
         android:text=""
         android:textAppearance="?android:attr/textAppearanceSmall" />
 
+    <Button
+        android:id="@+id/button_flush"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/last_server_response"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="5dp"
+        android:checked="false"
+        android:height="60sp"
+        android:onClick="onFlushClicked"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/button_flush"
+        android:textStyle="bold"
+        android:width="150sp" />
+
     <ImageView
         android:id="@+id/logo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/last_server_response"
+        android:layout_below="@+id/button_flush"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="10dp"
         android:contentDescription="@string/desc_logo"

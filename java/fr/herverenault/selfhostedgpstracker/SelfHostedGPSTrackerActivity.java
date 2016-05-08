@@ -172,6 +172,10 @@ public class SelfHostedGPSTrackerActivity extends Activity implements LocationLi
         }
     }
 
+    public void onFlushClicked(View view) {
+        new SelfHostedGPSTrackerService.SelfHostedGPSTrackerFlushThread(getApplicationContext()).start();
+    }
+
     /* -------------- GPS stuff -------------- */
 
     @Override

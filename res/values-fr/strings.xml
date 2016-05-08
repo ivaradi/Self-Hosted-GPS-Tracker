@@ -4,6 +4,7 @@
     <string name="app_name">Traceur GPS auto-hebergé</string>
     
     <string name="button_toggle">Traceur</string>
+    <string name="button_flush">Flusheur</string>
     
     <string name="desc_logo">Logo</string>
     

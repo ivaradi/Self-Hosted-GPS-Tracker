@@ -4,6 +4,7 @@
     <string name="app_name">Self-Hosted GPS Tracker</string>
     
     <string name="button_toggle">Tracker</string>
+    <string name="button_flush">Flush</string>
     
     <string name="desc_logo">Logo</string>
     
