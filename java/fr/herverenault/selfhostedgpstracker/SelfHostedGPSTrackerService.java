@@ -51,6 +51,7 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
     private long latestUpdate;
     private int pref_max_run_time;
     private boolean pref_timestamp;
+    private long startTime;
 
     public SelfHostedGPSTrackerService() {
         super("SelfHostedGPSTrackerService");
@@ -94,9 +95,9 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
         notifIntent.putExtra(NOTIFICATION, "START");
         sendBroadcast(notifIntent);
 
-        long currentTime = System.currentTimeMillis();
+        startTime = System.currentTimeMillis();
         new SelfHostedGPSTrackerRequest(getApplicationContext(),
-                                        urlText).start("tracker=start&t=" + currentTime);
+                                        urlText).start("tracker=start&t=" + startTime);
     }
 
     @Override
@@ -128,8 +129,8 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
         // (user clicked the stop button, or max run time has been reached)
         Log.d(MY_TAG, "in onDestroy, stop listening to the GPS");
         long currentTime = System.currentTimeMillis();
-        new SelfHostedGPSTrackerRequest(getApplicationContext(),
-                                        urlText).start("tracker=stop&t=" + currentTime);
+        new SelfHostedGPSTrackerRequest(getApplicationContext(), urlText).
+            start("tracker=stop&t=" + currentTime + "&t0=" + startTime);
 
         locationManager.removeUpdates(this);
 
@@ -166,7 +167,8 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
                 + "&alt=" + location.getAltitude ()
                 + "&spd=" + location.getSpeed ()
                 + "&brg=" + location.getBearing ()
-                + "&t=" + currentTime );
+                + "&t=" + currentTime
+                + "&t0=" + startTime);
     }
 
     @Override
@@ -300,7 +302,7 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
             String message;
             int code = 0;
 
-            if (rowID==-1) {
+            if (rowID==-1 && !params.startsWith("tracker=start")) {
                 openDatabase();
                 if (database!=null) {
                     rowID = dbAddPending(database, params);
