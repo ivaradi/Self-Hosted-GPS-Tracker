@@ -7,6 +7,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -16,6 +17,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.Pair;
@@ -88,7 +90,11 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
         pref_timestamp = preferences.getBoolean("pref_timestamp", false);
         urlText = getURLText(preferences);
 
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, pref_gps_updates * 1000, 1, this);
+        try {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, pref_gps_updates * 1000, 1, this);
+        } catch(SecurityException e) {
+            System.out.println("SelfHostedGPSTrackerService.onCreate: could not enable location updates due to missing permissions");
+        }
 
         lastServerResponse = getResources().getString(R.string.waiting_for_gps_data);
         Intent notifIntent = new Intent(NOTIFICATION);
@@ -109,10 +115,37 @@ public class SelfHostedGPSTrackerService extends IntentService implements Locati
         Intent notifIntent = new Intent(NOTIFICATION);
         sendBroadcast(notifIntent);
 
-        Notification notification = new Notification(R.drawable.ic_notif, getText(R.string.toast_service_running), System.currentTimeMillis());
-        Intent notificationIntent = new Intent(this, SelfHostedGPSTrackerActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-        notification.setLatestEventInfo(this, getText(R.string.app_name), getText(R.string.toast_service_running), pendingIntent);
+        int piFlags = 0;
+        if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.S) {
+            piFlags |= PendingIntent.FLAG_MUTABLE;
+        }
+        PendingIntent contentIntent =
+            PendingIntent.getActivity(this, 0, new Intent(), piFlags);
+
+        Resources resources = getResources();
+
+        CharSequence title = resources.getText(R.string.app_name);
+        CharSequence content = resources.getText(R.string.toast_service_running);
+
+        Notification.Builder notificationBuilder = null;
+
+        notificationBuilder =
+            new Notification.Builder(this, "fr.herverenault.selfhostedgpstracker");
+        notificationBuilder.setTicker(resources.getText(R.string.toast_service_running)).
+            setContentTitle(title).
+            setContentText(content).
+            setContentIntent(contentIntent).
+            setWhen(System.currentTimeMillis()).
+            setOngoing(true).
+            setSmallIcon(R.drawable.ic_notif);
+
+        Notification notification = notificationBuilder.build();
+
+        // Notification notification = new Notification.Builder(
+        //     new Notification(R.drawable.ic_notif, getText(R.string.toast_service_running), System.currentTimeMillis());
+        // Intent notificationIntent = new Intent(this, SelfHostedGPSTrackerActivity.class);
+        // PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        // notification.setLatestEventInfo(this, getText(R.string.app_name), getText(R.string.toast_service_running), pendingIntent);
         startForeground(R.id.logo, notification);
 
         long endTime = System.currentTimeMillis() + pref_max_run_time*60*60*1000;

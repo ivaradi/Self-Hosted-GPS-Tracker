@@ -1,6 +1,8 @@
 package fr.herverenault.selfhostedgpstracker;
 
 import android.app.Activity;
+import android.app.NotificationManager;
+import android.app.NotificationChannel;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -104,7 +106,22 @@ public class SelfHostedGPSTrackerActivity extends Activity implements LocationLi
         connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
 
         int pref_gps_updates = Integer.parseInt(preferences.getString("pref_gps_updates", "30")); // seconds
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, pref_gps_updates * 1000, 1, this);
+        try {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, pref_gps_updates * 1000, 1, this);
+        } catch(SecurityException e) {
+            System.out.println("SelfHostedGPSTrackerActivity.onCreate: could not enable location updates due to missing permissions");
+        }
+
+        NotificationManager notificationManager =
+            (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+
+        NotificationChannel notificationChannel =
+                new NotificationChannel("fr.herverenault.selfhostedgpstracker",
+                                        getString(R.string.notifchannel_name),
+                                        NotificationManager.IMPORTANCE_DEFAULT);
+        notificationChannel.setDescription(getString(R.string.notifchannel_descr));
+
+        notificationManager.createNotificationChannel(notificationChannel);
     }
 
     @Override
@@ -162,11 +179,14 @@ public class SelfHostedGPSTrackerActivity extends Activity implements LocationLi
     }
 
     public void onToggleClicked(View view) {
+        System.out.println("gpstracker: onToggleClicked");
         Intent intent = new Intent(this, SelfHostedGPSTrackerService.class);
         if (((ToggleButton) view).isChecked()) {
+            System.out.println("gpstracker: onToggleClicked1");
             startService(intent);
             edit_url.setEnabled(false);
         } else {
+            System.out.println("gpstracker: onToggleClicked2");
             stopService(intent);
             edit_url.setEnabled(true);
         }

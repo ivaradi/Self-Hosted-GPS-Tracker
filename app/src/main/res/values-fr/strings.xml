@@ -58,4 +58,7 @@
     <string name="error_ssl">Problème de connexion HTTPS</string>
     <string name="error_timeout">Temps d\'attente dépassé</string>
 
+    <string name="notifchannel_name">Events</string>
+    <string name="notifchannel_descr">Notifications about important events</string>
+
 </resources>

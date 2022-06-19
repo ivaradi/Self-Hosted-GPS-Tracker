@@ -4,13 +4,11 @@
     android:versionCode="12"
     android:versionName="1.7" >
 
-    <uses-sdk
-        android:minSdkVersion="7"
-        android:targetSdkVersion="22" />
-
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <application
         android:allowBackup="true"
@@ -20,14 +18,16 @@
         <activity
             android:name="fr.herverenault.selfhostedgpstracker.SelfHostedGPSTrackerActivity"
             android:label="@string/app_name"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name="fr.herverenault.selfhostedgpstracker.SelfHostedGPSTrackerService" />
+        <service android:name="fr.herverenault.selfhostedgpstracker.SelfHostedGPSTrackerService"
+                 android:foregroundServiceType="location"/>
         <activity android:name="SelfHostedGPSTrackerPrefs" />
     </application>
 
