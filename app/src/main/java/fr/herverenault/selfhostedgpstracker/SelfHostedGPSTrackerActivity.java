@@ -1,5 +1,11 @@
 package fr.herverenault.selfhostedgpstracker;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts.RequestPermission;
+import androidx.activity.ComponentActivity;
+import androidx.core.content.ContextCompat;
+
+import android.Manifest;
 import android.app.Activity;
 import android.app.NotificationManager;
 import android.app.NotificationChannel;
@@ -8,6 +14,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
@@ -30,7 +37,7 @@ import android.widget.ToggleButton;
 import java.text.DateFormat;
 import java.util.Date;
 
-public class SelfHostedGPSTrackerActivity extends Activity implements LocationListener {
+public class SelfHostedGPSTrackerActivity extends ComponentActivity implements LocationListener {
 
     private final static String CONNECTIVITY = "android.net.conn.CONNECTIVITY_CHANGE";
 
@@ -44,6 +51,17 @@ public class SelfHostedGPSTrackerActivity extends Activity implements LocationLi
     private ToggleButton button_toggle;
     private TextView text_running_since;
     private TextView last_server_response;
+
+    /**
+     * Permissions callback for one of the permissions
+     */
+    private ActivityResultLauncher<String> requestPermissionLauncher =
+        registerForActivityResult(new RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    startTracking();
+                }
+            }
+            );
 
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
@@ -180,15 +198,18 @@ public class SelfHostedGPSTrackerActivity extends Activity implements LocationLi
 
     public void onToggleClicked(View view) {
         System.out.println("gpstracker: onToggleClicked");
-        Intent intent = new Intent(this, SelfHostedGPSTrackerService.class);
         if (((ToggleButton) view).isChecked()) {
             System.out.println("gpstracker: onToggleClicked1");
-            startService(intent);
-            edit_url.setEnabled(false);
+            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==
+                PackageManager.PERMISSION_GRANTED)
+            {
+                startTracking();
+            } else {
+                requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+
+            }
         } else {
-            System.out.println("gpstracker: onToggleClicked2");
-            stopService(intent);
-            edit_url.setEnabled(true);
+            stopTracking();
         }
     }
 
@@ -219,6 +240,21 @@ public class SelfHostedGPSTrackerActivity extends Activity implements LocationLi
     }
 
     /* ----------- utility methods -------------- */
+
+    private void startTracking()
+    {
+        Intent intent = new Intent(this, SelfHostedGPSTrackerService.class);
+        startService(intent);
+        edit_url.setEnabled(false);
+    }
+
+    private void stopTracking()
+    {
+        Intent intent = new Intent(this, SelfHostedGPSTrackerService.class);
+        stopService(intent);
+        edit_url.setEnabled(true);
+    }
+
     private void updateServiceStatus() {
 
         if (SelfHostedGPSTrackerService.isRunning) {
